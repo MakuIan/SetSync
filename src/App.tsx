@@ -5,7 +5,7 @@ import {
   signOut,
 } from "firebase/auth";
 import type { User } from "firebase/auth";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { appId, auth, db } from "./config/firebase";
 import {
   addDoc,
@@ -17,16 +17,10 @@ import {
   Timestamp,
   updateDoc,
 } from "firebase/firestore";
-import type { FitnessData, SessionData } from "./types";
+import type { SessionData } from "./types";
 import { GoogleAuthProvider } from "firebase/auth";
 import { Activity } from "lucide-react";
 import LoginPage from "./components/LoginPage";
-import Header from "./components/Header";
-import { getTimeSince } from "./utils/timeHelpers";
-import LastWorkout from "./components/LastWorkout";
-import SetCounter from "./components/SetCounter";
-import AppTimer from "./components/Timer";
-import FinishButton from "./components/FinishButton";
 import ActiveSessionDetail from "./components/ActiveSessionDetail";
 import SessionList from "./components/SessionList";
 
@@ -43,7 +37,6 @@ function App() {
 
   // Timer State
   const [timerTime, setTimerTime] = useState(60);
-  const [defaultTime, setDefaultTime] = useState(60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId);

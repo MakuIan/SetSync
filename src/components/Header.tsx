@@ -1,5 +1,4 @@
-import { Activity, ChevronLeft, LogOut } from "lucide-react";
-import { THEME } from "../utils/constants";
+import { ChevronLeft } from "lucide-react";
 import type { SessionData } from "../types";
 
 const Header = ({
