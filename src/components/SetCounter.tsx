@@ -2,13 +2,14 @@ import { Dumbbell, Minus, Plus } from "lucide-react";
 import { THEME } from "../utils/constants";
 import Card from "./ui/Card";
 import ActionBtn from "./ui/ActionBtn";
+import type { SessionData } from "../types";
 
 const SetCounter = ({
   handleUpdateSets,
-  sets,
+  activeSession,
 }: {
   handleUpdateSets: (newVal: number) => void;
-  sets: number;
+  activeSession: SessionData | undefined;
 }) => (
   <Card highlight={true}>
     <div className="flex justify-between items-center mb-6">
@@ -25,16 +26,16 @@ const SetCounter = ({
 
     <div className="flex items-center justify-between gap-4">
       <ActionBtn
-        onClick={() => handleUpdateSets(sets - 1)}
+        onClick={() => handleUpdateSets((activeSession?.sets || 1) - 1)}
         icon={Minus}
-        variant="secondary"
-        className="w-14! h-14! rounded-2xl!"
+        variant="icon-only"
+        className="rounded-2xl!"
       />
-      <div className="t iext-6xl font-black text-white tabular-nums tracking-tighter">
-        {sets}
+      <div className="text-6xl font-black text-white tabular-nums tracking-tighter">
+        {activeSession?.sets || 1}
       </div>
       <ActionBtn
-        onClick={() => handleUpdateSets(sets + 1)}
+        onClick={() => handleUpdateSets((activeSession?.sets || 1) + 1)}
         icon={Plus}
         variant="icon-only"
         className="rounded-2xl!"

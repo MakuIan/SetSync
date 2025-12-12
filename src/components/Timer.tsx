@@ -1,3 +1,4 @@
+import type { SessionData } from "../types";
 import { THEME } from "../utils/constants";
 import { formatDuration } from "../utils/timeHelpers";
 import ActionBtn from "./ui/ActionBtn";
@@ -5,19 +6,19 @@ import Card from "./ui/Card";
 import { RotateCcw, Timer, Pause, Play } from "lucide-react";
 
 const AppTimer = ({
-  setDefaultTime,
+  handleUpdateDefaultTime,
   setIsTimerRunning,
   setTimerTime,
-  defaultTime,
+  activeSession,
   timerTime,
   isTimerRunning,
 }: {
-  setDefaultTime: (newVal: number) => void;
+  handleUpdateDefaultTime: (newVal: number) => void;
   setIsTimerRunning: (newVal: boolean) => void;
   setTimerTime: (newVal: number) => void;
-  defaultTime: number;
   timerTime: number;
   isTimerRunning: boolean;
+  activeSession: SessionData | undefined;
 }) => (
   <Card>
     <div className="flex justify-between items-center mb-6">
@@ -31,11 +32,9 @@ const AppTimer = ({
           <button
             key={t}
             onClick={() => {
-              setDefaultTime(t);
-              setTimerTime(t);
-              setIsTimerRunning(false);
+              handleUpdateDefaultTime(t);
             }}
-            className={`text-xs px-3 py-1.5 rounded-md transition-all ${defaultTime === t ? "bg-slate-700 text-white font-medium shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
+            className={`text-xs px-3 py-1.5 rounded-md transition-all ${activeSession?.defaultTimer === t ? "bg-slate-700 text-white font-medium shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
           >
             {t}
           </button>
@@ -53,7 +52,9 @@ const AppTimer = ({
       <div className="h-1.5 w-full bg-slate-800 rounded-full mt-4 overflow-hidden">
         <div
           className={`h-full transition-all duration-1000 ease-linear ${THEME.colors.primaryBg}`}
-          style={{ width: `${(timerTime / defaultTime) * 100}%` }}
+          style={{
+            width: `${(timerTime / (activeSession?.defaultTimer || 60)) * 100}%`,
+          }}
         />
       </div>
     </div>
@@ -80,7 +81,7 @@ const AppTimer = ({
       <ActionBtn
         onClick={() => {
           setIsTimerRunning(false);
-          setTimerTime(defaultTime);
+          setTimerTime(activeSession?.defaultTimer || 60);
         }}
         label="Reset"
         icon={RotateCcw}

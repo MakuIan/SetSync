@@ -7,9 +7,17 @@ export interface FitnessData {
 }
 
 export interface ActionBtnProps {
-  onClick: () => void;
+  onClick: (e?: React.MouseEvent) => void;
   icon?: LucideIcon;
   label?: string;
-  variant?: "primary" | "secondary" | "ghost" | "icon-only";
+  variant?: "primary" | "secondary" | "ghost" | "icon-only" | "danger";
   className?: string;
+}
+
+export interface SessionData {
+  id: string;
+  name: string;
+  sets: number;
+  lastWorkout: Timestamp | null;
+  defaultTimer: number;
 }

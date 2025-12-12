@@ -1,12 +1,13 @@
 import { History } from "lucide-react";
 import Card from "./ui/Card";
+import { getDateObj } from "../utils/renderHelpers";
+import type { SessionData } from "../types";
+import { getTimeSince } from "../utils/timeHelpers";
 
 const LastWorkout = ({
-  lastWorkout,
-  getTimeSince,
+  activeSession,
 }: {
-  lastWorkout: Date | null;
-  getTimeSince: (lastWorkout: Date | null) => string;
+  activeSession: SessionData | undefined;
 }) => (
   <Card>
     <div className="flex justify-between items-start">
@@ -15,14 +16,16 @@ const LastWorkout = ({
           Last Training
         </h3>
         <div className="text-2xl font-bold text-white">
-          {getTimeSince(lastWorkout)}
+          {getTimeSince(getDateObj(activeSession?.lastWorkout || null))}
         </div>
-        {lastWorkout && (
-          <div className="text-xstext-slate-500 mt-1">
-            {" "}
-            {lastWorkout.toLocaleTimeString([], {
+        {activeSession?.lastWorkout && (
+          <div className="text-xs text-slate-500 mt-1">
+            {getDateObj(activeSession.lastWorkout)?.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
+              weekday: "short",
+              month: "short",
+              day: "numeric",
             })}
           </div>
         )}
