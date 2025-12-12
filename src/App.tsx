@@ -7,25 +7,29 @@ import {
 import type { User } from "firebase/auth";
 import { useEffect, useRef, useState } from "react";
 import { appId, auth, db } from "./config/firebase";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, Timestamp } from "firebase/firestore";
 import type { FitnessData } from "./types";
 import { GoogleAuthProvider } from "firebase/auth";
 import { Activity } from "lucide-react";
 import LoginPage from "./components/LoginPage";
 import Header from "./components/Header";
+import { getTimeSince } from "./utils/timeHelpers";
+import LastWorkout from "./components/LastWorkout";
+import SetCounter from "./components/SetCounter";
+import AppTimer from "./components/Timer";
+import FinishButton from "./components/FinishButton";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [sets, setSets] = useState(0);
+  const [sets, setSets] = useState(1);
   const [lastWorkout, setLastWorkout] = useState<Date | null>(null);
 
   // Timer State
   const [timerTime, setTimerTime] = useState(90);
-  const [defaultTimer, setDefaultTimer] = useState(90);
+  const [defaultTime, setDefaultTime] = useState(90);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auth & Data Sync
   useEffect(() => {
@@ -40,15 +44,7 @@ function App() {
 
   useEffect(() => {
     if (!user) return;
-    const docRef = doc(
-      db,
-      "artifacts",
-      appId,
-      "users",
-      user.uid,
-      "fitness_data",
-      "current_session"
-    );
+    const docRef = doc(db, "artifacts", appId, "users", user.uid);
 
     return onSnapshot(
       docRef,
@@ -136,16 +132,13 @@ function App() {
 
   const handleFinish = async () => {
     if (!user) return;
+    const now = new Date();
     await setDoc(
-      doc(
-        db,
-        "artifacts",
-        appId,
-        "users",
-        user.uid,
-        "fitness_data",
-        "current_session"
-      ),
+      doc(db, "artifacts", appId, "users", user.uid),
+      {
+        sets: 0,
+        lastWorkout: Timestamp.fromDate(now),
+      },
       { merge: true }
     );
     setSets(0);
@@ -170,7 +163,22 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-20">
       <Header user={user} handleLogout={handleLogout} />
-      <main className="max-w-md mx-auto p-4 space-y-4 mt-2"></main>
+      <main className="max-w-md mx-auto p-4 space-y-4 mt-2">
+        <LastWorkout lastWorkout={lastWorkout} getTimeSince={getTimeSince} />
+        <SetCounter handleUpdateSets={handleUpdateSets} sets={sets} />
+        <AppTimer
+          setDefaultTime={setDefaultTime}
+          setIsTimerRunning={setIsTimerRunning}
+          setTimerTime={setTimerTime}
+          defaultTime={defaultTime}
+          timerTime={timerTime}
+          isTimerRunning={isTimerRunning}
+        />
+        <FinishButton
+          handleFinish={handleFinish}
+          isTimerRunning={isTimerRunning}
+        />
+      </main>
     </div>
   );
 }
