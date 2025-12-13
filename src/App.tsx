@@ -37,9 +37,19 @@ function App() {
 
   const activeSession = sessions.find((s) => s.id === activeSessionId);
 
-  // Timer State
-  const [timerTime, setTimerTime] = useState(60);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  //Timer derived state
+  const [, setTick] = useState(0);
+  const isTimerRunning = activeSession?.timerRunning ?? false;
+
+  const timerTime = (() => {
+    if (activeSession?.timerRunning && activeSession?.timerEndsAt) {
+      const now = Timestamp.now();
+      const diff =
+        activeSession.timerEndsAt.toDate().getTime() - now.toDate().getTime();
+      return Math.max(0, Math.floor(diff / 1000));
+    }
+    return activeSession?.timerLeft ?? activeSession?.defaultTimer ?? 60;
+  })();
 
   // Auth & Data Sync
   useEffect(() => {
@@ -75,6 +85,12 @@ function App() {
             sets: data.sets || 0,
             lastWorkout: data.lastWorkout || null,
             defaultTimer: data.defaultTimer || 60,
+            timerRunning: data.timerRunning || false,
+            timerEndsAt: data.timerEndsAt || null,
+            timerLeft:
+              data.timerLeft !== undefined
+                ? data.timerLeft
+                : data.defaultTimer || 60,
           });
         });
         loadedSessions.sort((a, b) => a.name.localeCompare(b.name));
@@ -87,23 +103,15 @@ function App() {
     );
   }, [user]);
 
-  // Timer Effect
+  //Active ticking effect - handles the active session timer logic
   useEffect(() => {
     if (!isTimerRunning) return;
+    const timerId = setInterval(() => {
+      setTick((tick) => tick + 1);
+    }, 1000);
 
-    const tick = () => {
-      setTimerTime((prevTime) => {
-        if (prevTime <= 1) {
-          setIsTimerRunning(false);
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    };
-
-    const timerId = setInterval(tick, 1000);
     return () => clearInterval(timerId);
-  }, [isTimerRunning, timerTime]);
+  }, [isTimerRunning]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -139,6 +147,8 @@ function App() {
           sets: 0,
           lastWorkout: null,
           defaultTimer: 60,
+          timerRunning: false,
+          timerLeft: 60,
         }
       );
       setNewSessionName("");
@@ -194,11 +204,42 @@ function App() {
     [user, activeSessionId]
   );
 
-  const handleUpdateDefaultTime = async (time: number) => {
+  // start/pause Timer logic
+  const handleSetIsTimerRunning = async (shouldRun: boolean) => {
+    if (!user || !activeSessionId) return;
+
+    try {
+      const ref = doc(
+        db,
+        "artifacts",
+        appId,
+        "users",
+        user.uid,
+        "sessions",
+        activeSessionId
+      );
+      if (shouldRun) {
+        const endTime = new Date(Date.now() + timerTime * 1000);
+        await updateDoc(ref, {
+          timerRunning: true,
+          timerEndsAt: Timestamp.fromDate(endTime),
+        });
+      } else {
+        await updateDoc(ref, {
+          timerRunning: false,
+          timerEndsAt: null,
+          timerLeft: timerTime,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to update timer status", err);
+      setError("Failed to update timer status");
+    }
+  };
+
+  const handleSetTimerTime = async (newTime: number) => {
     if (!user || !activeSessionId) return;
     try {
-      setTimerTime(time);
-      setIsTimerRunning(false);
       await updateDoc(
         doc(
           db,
@@ -209,7 +250,33 @@ function App() {
           "sessions",
           activeSessionId
         ),
-        { defaultTimer: time }
+        { timerLeft: newTime, timerRunning: false, timerEndsAt: null }
+      );
+    } catch (err) {
+      console.error("Failed to update timer time", err);
+      setError("Failed to update timer time");
+    }
+  };
+
+  const handleUpdateDefaultTime = async (time: number) => {
+    if (!user || !activeSessionId) return;
+    try {
+      await updateDoc(
+        doc(
+          db,
+          "artifacts",
+          appId,
+          "users",
+          user.uid,
+          "sessions",
+          activeSessionId
+        ),
+        {
+          defaultTimer: time,
+          timerLeft: time,
+          timerRunning: false,
+          timerEndsAt: null,
+        }
       );
     } catch (err) {
       console.error("Failed to update default time", err);
@@ -235,6 +302,9 @@ function App() {
           sets: 0,
           lastWorkout: Timestamp.fromDate(now),
           name: activeSession?.name || "Unknown Training",
+          defaultTimer: activeSession?.defaultTimer || 60,
+          timerLeft: activeSession?.defaultTimer || 60,
+          timerRunning: false,
         }
       );
     } catch (err) {
@@ -246,20 +316,41 @@ function App() {
   // Auto-Reset timer when it reaches zero
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+
     if (timerTime === 0 && activeSession) {
       timeoutId = setTimeout(() => {
-        setTimerTime(activeSession.defaultTimer || 60);
-
+        const defaultT = activeSession.defaultTimer || 60;
         const currentSets = activeSession.sets || 1;
         const nextSet = currentSets + 1;
 
         handleUpdateSets(nextSet);
 
-        setIsTimerRunning(false);
+        if (user && activeSessionId) {
+          updateDoc(
+            doc(
+              db,
+              "artifacts",
+              appId,
+              "users",
+              user.uid,
+              "sessions",
+              activeSessionId
+            ),
+            {
+              timerRunning: false,
+              timerLeft: defaultT,
+              timerEndsAt: null,
+            }
+          ).catch((e) => {
+            console.error("Auto-reset error", e);
+            setError("Auto-reset error");
+          });
+        }
       }, 10000);
     }
+
     return () => clearTimeout(timeoutId);
-  }, [timerTime, activeSession, handleUpdateSets]);
+  }, [timerTime, activeSession, handleUpdateSets, user, activeSessionId]);
 
   if (isLoading)
     return (
@@ -299,8 +390,8 @@ function App() {
       error={error}
       handleUpdateSets={handleUpdateSets}
       handleFinish={handleFinish}
-      setIsTimerRunning={setIsTimerRunning}
-      setTimerTime={setTimerTime}
+      setIsTimerRunning={handleSetIsTimerRunning}
+      setTimerTime={handleSetTimerTime}
       timerTime={timerTime}
       isTimerRunning={isTimerRunning}
     />

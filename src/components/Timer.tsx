@@ -46,7 +46,7 @@ const AppTimer = ({
       <div
         className={`text-6xl font-mono font-medium tracking-tighter tabular-nums transition-colors ${timerTime === 0 ? THEME.colors.primary : "text-white"}`}
       >
-        {formatDuration(activeSession?.defaultTimer || timerTime)}
+        {formatDuration(timerTime)}
       </div>
       {/* Progress Bar */}
       <div className="h-1.5 w-full bg-slate-800 rounded-full mt-4 overflow-hidden">
@@ -80,7 +80,6 @@ const AppTimer = ({
       </button>
       <ActionBtn
         onClick={() => {
-          setIsTimerRunning(false);
           setTimerTime(activeSession?.defaultTimer || 60);
         }}
         label="Reset"
