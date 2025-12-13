@@ -5,7 +5,7 @@ import {
   signOut,
 } from "firebase/auth";
 import type { User } from "firebase/auth";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { appId, auth, db } from "./config/firebase";
 import {
   addDoc,
@@ -35,11 +35,11 @@ function App() {
   const [newSessionName, setNewSessionName] = useState<string>("");
   const [isCreating, setIsCreating] = useState(false);
 
+  const activeSession = sessions.find((s) => s.id === activeSessionId);
+
   // Timer State
   const [timerTime, setTimerTime] = useState(60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-
-  const activeSession = sessions.find((s) => s.id === activeSessionId);
 
   // Auth & Data Sync
   useEffect(() => {
@@ -103,13 +103,12 @@ function App() {
 
     const timerId = setInterval(tick, 1000);
     return () => clearInterval(timerId);
-  }, [isTimerRunning]);
+  }, [isTimerRunning, timerTime]);
 
   const handleGoogleLogin = async () => {
-    console.log("DEBUG AUTH:", auth);
     try {
       const provider = new GoogleAuthProvider();
-      console.log("DEBUG PROVIDER:", provider);
+
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Google Login Error:", error);
@@ -167,29 +166,33 @@ function App() {
     }
   };
 
-  const handleUpdateSets = async (newVal: number) => {
-    if (!user || !activeSessionId) return;
-    const val = Math.max(0, newVal);
-    try {
-      await updateDoc(
-        doc(
-          db,
-          "artifacts",
-          appId,
-          "users",
-          user.uid,
-          "sessions",
-          activeSessionId
-        ),
-        {
-          sets: val,
-        }
-      );
-    } catch (err) {
-      console.error("Failed to updates Sets", err);
-      setError("Failed to update sets");
-    }
-  };
+  const handleUpdateSets = useCallback(
+    async (newVal: number) => {
+      const finalSet = newVal > 3 ? 1 : newVal;
+      if (!user || !activeSessionId) return;
+      const val = Math.max(0, finalSet);
+      try {
+        await updateDoc(
+          doc(
+            db,
+            "artifacts",
+            appId,
+            "users",
+            user.uid,
+            "sessions",
+            activeSessionId
+          ),
+          {
+            sets: val,
+          }
+        );
+      } catch (err) {
+        console.error("Failed to updates Sets", err);
+        setError("Failed to update sets");
+      }
+    },
+    [user, activeSessionId]
+  );
 
   const handleUpdateDefaultTime = async (time: number) => {
     if (!user || !activeSessionId) return;
@@ -239,6 +242,24 @@ function App() {
       setError("Failed to exit");
     }
   };
+
+  // Auto-Reset timer when it reaches zero
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (timerTime === 0 && activeSession) {
+      timeoutId = setTimeout(() => {
+        setTimerTime(activeSession.defaultTimer || 60);
+
+        const currentSets = activeSession.sets || 1;
+        const nextSet = currentSets + 1;
+
+        handleUpdateSets(nextSet);
+
+        setIsTimerRunning(false);
+      }, 10000);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [timerTime, activeSession, handleUpdateSets]);
 
   if (isLoading)
     return (

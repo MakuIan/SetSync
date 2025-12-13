@@ -28,7 +28,7 @@ const AppTimer = ({
         <Timer className="h-4 w-4" /> Pause
       </h2>
       <div className="flex gap-1 bg-slate-800 p-1 rounded-lg">
-        {[30, 60].map((t) => (
+        {[30, 60, 300, 600].map((t) => (
           <button
             key={t}
             onClick={() => {
@@ -36,7 +36,7 @@ const AppTimer = ({
             }}
             className={`text-xs px-3 py-1.5 rounded-md transition-all ${activeSession?.defaultTimer === t ? "bg-slate-700 text-white font-medium shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
           >
-            {t}
+            {formatDuration(t)}
           </button>
         ))}
       </div>
@@ -46,14 +46,14 @@ const AppTimer = ({
       <div
         className={`text-6xl font-mono font-medium tracking-tighter tabular-nums transition-colors ${timerTime === 0 ? THEME.colors.primary : "text-white"}`}
       >
-        {formatDuration(timerTime)}
+        {formatDuration(activeSession?.defaultTimer || timerTime)}
       </div>
       {/* Progress Bar */}
       <div className="h-1.5 w-full bg-slate-800 rounded-full mt-4 overflow-hidden">
         <div
           className={`h-full transition-all duration-1000 ease-linear ${THEME.colors.primaryBg}`}
           style={{
-            width: `${(timerTime / (activeSession?.defaultTimer || 60)) * 100}%`,
+            width: `${((activeSession?.defaultTimer || timerTime) / (activeSession?.defaultTimer || 60)) * 100}%`,
           }}
         />
       </div>

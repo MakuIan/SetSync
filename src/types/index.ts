@@ -20,4 +20,7 @@ export interface SessionData {
   sets: number;
   lastWorkout: Timestamp | null;
   defaultTimer: number;
+  timerRunning?: boolean;
+  timerEndsAt?: Timestamp | null;
+  timerLeft?: number;
 }
