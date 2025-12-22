@@ -45,11 +45,11 @@ const SessionsList = ({
             >
               <Trash2 className="h-4 w-4" />
             </button>
-            {session.sets > 0 && (
+            {/* {session.sets > 0 && (
               <span className="text-cs bg-indigo-500 text-white px-2 py-1 rounded-md font-bold">
                 {session.sets} Sets
               </span>
-            )}
+            )} */}
           </div>
         </div>
       </Card>

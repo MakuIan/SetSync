@@ -53,7 +53,7 @@ const AppTimer = ({
         <div
           className={`h-full transition-all duration-1000 ease-linear ${THEME.colors.primaryBg}`}
           style={{
-            width: `${((activeSession?.defaultTimer || timerTime) / (activeSession?.defaultTimer || 60)) * 100}%`,
+            width: `${(timerTime / (activeSession?.defaultTimer || 60)) * 100}%`,
           }}
         />
       </div>

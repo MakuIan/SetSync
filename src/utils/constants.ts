@@ -23,3 +23,4 @@ export const THEME = {
       "flex items-center justify-center rounded-xl transition-all active:scale-95",
   },
 };
+export const AUTO_RESET_DELAY_MS = 10000;

@@ -49,6 +49,7 @@ const ActiveSessionDetail = ({
       <SetCounter
         activeSession={activeSession}
         handleUpdateSets={handleUpdateSets}
+        timerTime={timerTime}
       />
       <AppTimer
         activeSession={activeSession}

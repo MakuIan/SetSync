@@ -23,6 +23,7 @@ import { Activity } from "lucide-react";
 import LoginPage from "./components/LoginPage";
 import ActiveSessionDetail from "./components/ActiveSessionDetail";
 import SessionList from "./components/SessionList";
+import { AUTO_RESET_DELAY_MS } from "./utils/constants";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -346,7 +347,7 @@ function App() {
             setError("Auto-reset error");
           });
         }
-      }, 10000);
+      }, AUTO_RESET_DELAY_MS);
     }
 
     return () => clearTimeout(timeoutId);
