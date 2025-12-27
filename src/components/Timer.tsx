@@ -25,10 +25,10 @@ const AppTimer = ({
       <h2
         className={`font-bold flex items-center gap-2 ${THEME.colors.primary}`}
       >
-        <Timer className="h-4 w-4" /> Pause
+        <Timer className="h-4 w-4" /> Break
       </h2>
       <div className="flex gap-1 bg-slate-800 p-1 rounded-lg">
-        {[30, 60, 300, 600].map((t) => (
+        {[30, 60, 300].map((t) => (
           <button
             key={t}
             onClick={() => {

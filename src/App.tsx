@@ -286,6 +286,7 @@ function App() {
   };
 
   const handleFinish = async () => {
+    if (!window.confirm("Are you sure you want to finish this session?")) return;
     if (!user || !activeSessionId) return;
     const now = new Date();
     try {
